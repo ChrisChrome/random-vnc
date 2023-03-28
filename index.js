@@ -52,6 +52,9 @@ client.on("interactionCreate", async interaction => {
 					// Create the embed
 					const embed = {
 						title: "VNC Server",
+						footer: {
+							text: `ID: ${response.data.id}`
+						},
 						image: {
 							"url": screenshotURL
 						},
@@ -113,6 +116,9 @@ client.on("interactionCreate", async interaction => {
 						image: {
 							"url": screenshotURL
 						},
+						footer: {
+							text: `ID: ${response.data.id}`
+						},
 						fields: [{
 								name: "Address",
 								value: `[${response.data.ip}:${response.data.port}](vnc://${response.data.ip}:${response.data.port})`,
@@ -171,6 +177,9 @@ client.on("interactionCreate", async interaction => {
 					title: "VNC Server",
 					image: {
 						"url": screenshotURL
+					},
+					footer: {
+						text: `ID: ${response.data.id}`
 					},
 					fields: [{
 							name: "Address",
