@@ -223,7 +223,8 @@ client.on("interactionCreate", async interaction => {
 				}).catch(async (error) => {
 					// If there was an error, send it
 					await interaction.editReply({
-						content: `An error occurred: ${error}`
+						content: `${error}`,
+						components: reply_comps
 					});
 				});
 				break;
@@ -245,7 +246,13 @@ client.on("interactionCreate", async interaction => {
 					// If the connection was successful, send the time it took to connect
 					await interaction.editReply({
 						content: `:white_check_mark: Connection successful! Ping ${Date.now() - start}ms to connect.`
-					});
+					}).then(() => {
+						//delete after 5 seconds
+						setTimeout(() => {
+							interaction.deleteReply();
+						}
+						, 5000);
+					});;
 					// Destroy the socket
 					socket.destroy();
 				}).on("error", async (error) => {
