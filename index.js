@@ -300,19 +300,19 @@ const reply_comps = [{
 			type: 2,
 			emoji: {
 				animated: false,
-				name: "▶️"
+				name: "📡"
 			},
-			style: 2,
-			custom_id: "send"
+			style: 1,
+			custom_id: "test"
 		},
 		{
 			type: 2,
 			emoji: {
 				animated: false,
-				name: "📡"
+				name: "▶️"
 			},
-			style: 1,
-			custom_id: "test"
+			style: 2,
+			custom_id: "send"
 		}
 	]
 }]
