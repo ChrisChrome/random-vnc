@@ -236,7 +236,7 @@ client.on("interactionCreate", async interaction => {
 				// Test if a connection can be made
 				// Open TCP connection
 				let socket = new net.Socket();
-				socket.setTimeout(5000);
+				socket.setTimeout(10000);
 				let start = Date.now();
 				socket.connect({
 					host: vncAddress.split(":")[0],
