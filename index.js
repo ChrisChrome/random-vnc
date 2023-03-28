@@ -2,6 +2,8 @@ const axios = require('axios');
 const colors = require('colors');
 const Discord = require('discord.js');
 const config = require('./config.json');
+// TCP client
+const net = require('net');
 const client = new Discord.Client({
 	intents: []
 });
@@ -60,7 +62,7 @@ client.on("interactionCreate", async interaction => {
 						},
 						fields: [{
 								name: "Address",
-								value: `[${response.data.ip}:${response.data.port}](vnc://${response.data.ip}:${response.data.port})`,
+								value: `${response.data.ip}:${response.data.port}`,
 								inline: true
 							},
 							{
@@ -121,7 +123,7 @@ client.on("interactionCreate", async interaction => {
 						},
 						fields: [{
 								name: "Address",
-								value: `[${response.data.ip}:${response.data.port}](vnc://${response.data.ip}:${response.data.port})`,
+								value: `${response.data.ip}:${response.data.port}`,
 								inline: true
 							},
 							{
@@ -165,66 +167,115 @@ client.on("interactionCreate", async interaction => {
 				});
 				break;
 			case "send": // Send the user a random VNC server
-			await interaction.deferReply({
-				ephemeral: false
-			});
-			// Get a random VNC server
-			await axios.get("https://computernewb.com/vncresolver/api/scans/vnc/random").then(async (response) => {
-				// Get the screenshot URL
-				let screenshotURL = `https://computernewb.com/vncresolver/api/scans/vnc/screenshot/${response.data.id}`;
-				// Create the embed
-				const embed = {
-					title: "VNC Server",
-					image: {
-						"url": screenshotURL
-					},
-					footer: {
-						text: `ID: ${response.data.id}`
-					},
-					fields: [{
-							name: "Address",
-							value: `[${response.data.ip}:${response.data.port}](vnc://${response.data.ip}:${response.data.port})`,
-							inline: true
-						},
-						{
-							name: "Hostname",
-							value: response.data.hostname ? response.data.hostname : "Unknown",
-							inline: true
-						},
-						{
-							name: "Client Name",
-							value: response.data.clientname ? response.data.clientname : "Unknown",
-							inline: true
-						},
-						{
-							name: "Screen Resolution",
-							value: response.data.screenres ? response.data.screenres : "Unknown",
-							inline: true
-						},
-						{
-							name: "Location",
-							value: `${response.data.city}, ${response.data.state}, ${response.data.country}`,
-							inline: true
-						},
-						{
-							name: "ASN",
-							value: response.data.asn ? response.data.asn : "Unknown",
-							inline: true
-						},
-					],
-				}
-				// Send the embed
-				await interaction.editReply({
-					embeds: [embed],
-					components: reply_comps
+				await interaction.deferReply({
+					ephemeral: false
 				});
-			}).catch(async (error) => {
-				// If there was an error, send it
-				await interaction.editReply({
-					content: `An error occurred: ${error}`
+				// Get a random VNC server
+				await axios.get("https://computernewb.com/vncresolver/api/scans/vnc/random").then(async (response) => {
+					// Get the screenshot URL
+					let screenshotURL = `https://computernewb.com/vncresolver/api/scans/vnc/screenshot/${response.data.id}`;
+					// Create the embed
+					const embed = {
+						title: "VNC Server",
+						image: {
+							"url": screenshotURL
+						},
+						footer: {
+							text: `ID: ${response.data.id}`
+						},
+						fields: [{
+								name: "Address",
+								value: `${response.data.ip}:${response.data.port}`,
+								inline: true
+							},
+							{
+								name: "Hostname",
+								value: response.data.hostname ? response.data.hostname : "Unknown",
+								inline: true
+							},
+							{
+								name: "Client Name",
+								value: response.data.clientname ? response.data.clientname : "Unknown",
+								inline: true
+							},
+							{
+								name: "Screen Resolution",
+								value: response.data.screenres ? response.data.screenres : "Unknown",
+								inline: true
+							},
+							{
+								name: "Location",
+								value: `${response.data.city}, ${response.data.state}, ${response.data.country}`,
+								inline: true
+							},
+							{
+								name: "ASN",
+								value: response.data.asn ? response.data.asn : "Unknown",
+								inline: true
+							},
+						],
+					}
+					// Send the embed
+					await interaction.editReply({
+						embeds: [embed],
+						components: reply_comps
+					});
+				}).catch(async (error) => {
+					// If there was an error, send it
+					await interaction.editReply({
+						content: `An error occurred: ${error}`
+					});
 				});
-			});
-			break;
+				break;
+			case "test": // Test the vnc server
+				await interaction.deferReply({
+					ephemeral: false
+				});
+				// get the vnc server address from the embed
+				let vncAddress = interaction.message.embeds[0].fields[0].value;
+				// Test if a connection can be made
+				// Open TCP connection
+				let socket = new net.Socket();
+				socket.setTimeout(5000);
+				let start = Date.now();
+				socket.connect({
+					host: vncAddress.split(":")[0],
+					port: vncAddress.split(":")[1]
+				}, async () => {
+					// If the connection was successful, send the time it took to connect
+					await interaction.editReply({
+						content: `:white_check_mark: Connection successful! Ping ${Date.now() - start}ms to connect.`
+					});
+					// Destroy the socket
+					socket.destroy();
+				}).on("error", async (error) => {
+					// If there was an error, send it
+					await interaction.editReply({
+						content: `:x: ${error}\nTook ${Date.now() - start}ms`
+					}).then(() => {
+						//delete after 5 seconds
+						setTimeout(() => {
+							interaction.deleteReply();
+						}
+						, 5000);
+					});
+					// Destroy the socket
+					socket.destroy();
+				}).on("timeout", async () => {
+					// If the connection timed out, send that
+					await interaction.editReply({
+						content: `:x: Connection timed out! Took ${Date.now() - start}ms`
+					}).then(() => {
+						//delete after 5 seconds
+						setTimeout(() => {
+							interaction.deleteReply();
+						}
+						, 5000);
+					});
+					// Destroy the socket
+					socket.destroy();
+				});
+				break;
 		}
 	}
 
@@ -237,23 +288,33 @@ client.on("interactionCreate", async interaction => {
 const reply_comps = [{
 	type: 1,
 	components: [{
-		type: 2,
-		emoji: {
-			animated: false,
-			name: "🔁"
+			type: 2,
+			emoji: {
+				animated: false,
+				name: "🔁"
+			},
+			style: 4,
+			custom_id: "give"
 		},
-		style: 1,
-		custom_id: "give"
-	},
-	{
-		type: 2,
-		emoji: {
-			animated: false,
-			name: "▶️"
+		{
+			type: 2,
+			emoji: {
+				animated: false,
+				name: "▶️"
+			},
+			style: 2,
+			custom_id: "send"
 		},
-		style: 1,
-		custom_id: "send"
-	}]
+		{
+			type: 2,
+			emoji: {
+				animated: false,
+				name: "📡"
+			},
+			style: 1,
+			custom_id: "test"
+		}
+	]
 }]
 
 // Error handling
