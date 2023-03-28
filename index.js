@@ -3,7 +3,7 @@ const colors = require('colors');
 const Discord = require('discord.js');
 const config = require('./config.json');
 const client = new Discord.Client({
-	intents: ['Guilds']
+	intents: []
 });
 const {
 	REST,
@@ -22,18 +22,12 @@ client.on("ready", async () => {
 		try {
 			console.log(`${colors.cyan("[INFO]")} Registering Commands...`)
 			let start = Date.now()
-			// For every guild
-			for (const guild of client.guilds.cache.values()) {
-				let gStart = Date.now();
-				console.log(`${colors.cyan("[INFO]")} Registering Commands for ${colors.green(guild.name)}...`);
-				// Register commands
-				await rest.put(
-					Routes.applicationGuildCommands(client.user.id, guild.id), {
-						body: commands
-					},
-				);
-				console.log(`${colors.cyan("[INFO]")} Successfully registered commands for ${colors.green(guild.name)}. Took ${colors.green((Date.now() - gStart) / 1000)} seconds.`);
-			};
+			// Register commands
+			await rest.put(
+				Routes.applicationCommands(client.user.id), {
+					body: commands
+				},
+			);
 			console.log(`${colors.cyan("[INFO]")} Successfully registered commands. Took ${colors.green((Date.now() - start) / 1000)} seconds.`);
 		} catch (error) {
 			console.error(error);
